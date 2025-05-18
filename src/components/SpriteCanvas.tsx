@@ -69,6 +69,12 @@ const SpriteCanvas: React.FC<SpriteCanvasProps> = ({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
+      {/* Debug info for canvas dimensions */}
+      <div className="absolute top-0 left-0 bg-black bg-opacity-50 text-white text-xs p-1 z-50">
+        Canvas:{" "}
+        {canvasRef.current ? `${canvasRef.current.clientWidth}x${canvasRef.current.clientHeight}` : "Loading..."}
+      </div>
+
       {sprites.map((sprite) => (
         <div
           key={sprite.id}
@@ -81,6 +87,11 @@ const SpriteCanvas: React.FC<SpriteCanvasProps> = ({
             zIndex: selectedSpriteId === sprite.id ? 10 : 1,
           }}
         >
+          {/* Debug info for sprite position */}
+          <div className="absolute -top-5 left-0 bg-blue-500 bg-opacity-75 text-white text-xs px-1 rounded">
+            {sprite.x.toFixed(0)},{sprite.y.toFixed(0)}
+          </div>
+
           <Sprite
             costume={sprite.costume}
             direction={sprite.direction}

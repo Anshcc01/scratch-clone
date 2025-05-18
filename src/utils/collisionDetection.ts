@@ -1,9 +1,12 @@
 import type { Sprite } from "../types"
 
-// Enhanced collision detection with improved accuracy
+// Enhanced collision detection with improved accuracy and debugging
 export const checkCollisions = (sprites: Sprite[]): [string, string][] => {
   const collisions: [string, string][] = []
   const collidedSprites = new Set<string>() // Track sprites that have already collided
+
+  // Debug info
+  console.log(`Checking collisions among ${sprites.length} sprites`)
 
   // Check each pair of sprites for collision
   for (let i = 0; i < sprites.length; i++) {
@@ -26,9 +29,12 @@ export const checkCollisions = (sprites: Sprite[]): [string, string][] => {
       const dy = spriteA.y - spriteB.y
       const distance = Math.sqrt(dx * dx + dy * dy)
 
-      // If distance is less than 60px (increased from 50px), consider it a collision
-      // This makes collisions more generous and easier to trigger
+      // Debug distance
+      console.log(`Distance between ${spriteA.name} and ${spriteB.name}: ${distance.toFixed(2)}px`)
+
+      // If distance is less than 60px, consider it a collision
       if (distance < 60) {
+        console.log(`COLLISION DETECTED between ${spriteA.name} and ${spriteB.name}!`)
         collisions.push([spriteA.id, spriteB.id])
 
         // Mark these sprites as having collided

@@ -48,6 +48,9 @@ const ScratchEditor: React.FC = () => {
   const demoIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [demoTick, setDemoTick] = useState<number>(0)
 
+  // Add this near the top of the ScratchEditor component, after the state declarations
+  const [debugMode, setDebugMode] = useState<boolean>(false)
+
   const selectedSprite = sprites.find((sprite) => sprite.id === selectedSpriteId)
 
   const addBlock = (block: Block) => {
@@ -305,7 +308,7 @@ const ScratchEditor: React.FC = () => {
   }
 
   // Function to separate sprites after collision
-  const separateSprites = (spriteA: Sprite, spriteB: Sprite): [Sprite, Sprite] => {
+  const separateSpritesAfterCollision = (spriteA: Sprite, spriteB: Sprite): [Sprite, Sprite] => {
     // Calculate vector from A to B
     const dx = spriteB.x - spriteA.x
     const dy = spriteB.y - spriteA.y
@@ -349,6 +352,9 @@ const ScratchEditor: React.FC = () => {
     const deltaTime = timestamp - lastTimeRef.current
     lastTimeRef.current = timestamp
 
+    // Add debug logging in production
+    console.log(`Animation frame executing, deltaTime: ${deltaTime}ms`)
+
     // Reset the collided sprites set at the beginning of each frame
     collidedSpritesRef.current = new Set()
 
@@ -364,10 +370,19 @@ const ScratchEditor: React.FC = () => {
     // Check for collisions between sprites that aren't on cooldown
     const eligibleSprites = updatedSprites.filter((s) => s.collisionCooldown <= 0)
     const collisions = checkCollisions(eligibleSprites)
+
+    // Add debug logging for collision detection
+    if (eligibleSprites.length > 1) {
+      console.log(`Checking collisions among ${eligibleSprites.length} sprites`)
+      console.log(`Detected ${collisions.length} collisions`)
+    }
+
     let collisionHappened = false
 
     if (collisions.length > 0) {
       collisionHappened = true
+      console.log("Collision detected! Processing collision...")
+
       // Set collision flag for visual feedback
       setCollisionOccurred(true)
 
@@ -383,11 +398,15 @@ const ScratchEditor: React.FC = () => {
 
       // Process each collision and swap blocks
       for (const [spriteAId, spriteBId] of collisions) {
+        console.log(`Processing collision between sprites ${spriteAId} and ${spriteBId}`)
+
         // Find the sprites involved in the collision
         const spriteAIndex = updatedSprites.findIndex((s) => s.id === spriteAId)
         const spriteBIndex = updatedSprites.findIndex((s) => s.id === spriteBId)
 
         if (spriteAIndex !== -1 && spriteBIndex !== -1) {
+          console.log("Found both sprites, processing collision effects")
+
           // Mark sprites as collided for visual feedback
           updatedSprites[spriteAIndex].collided = true
           updatedSprites[spriteBIndex].collided = true
@@ -397,7 +416,10 @@ const ScratchEditor: React.FC = () => {
           updatedSprites[spriteBIndex].collisionCooldown = 2000
 
           // Separate the sprites to prevent them from getting stuck
-          const [separatedA, separatedB] = separateSprites(updatedSprites[spriteAIndex], updatedSprites[spriteBIndex])
+          const [separatedA, separatedB] = separateSpritesAfterCollision(
+            updatedSprites[spriteAIndex],
+            updatedSprites[spriteBIndex],
+          )
 
           updatedSprites[spriteAIndex] = separatedA
           updatedSprites[spriteBIndex] = separatedB
@@ -411,13 +433,19 @@ const ScratchEditor: React.FC = () => {
           updatedSprites[spriteAIndex].blocks = JSON.parse(JSON.stringify(updatedSprites[spriteBIndex].blocks))
           updatedSprites[spriteBIndex].blocks = tempBlocks
 
+          console.log("Blocks swapped successfully")
+
           // Announce the collision with speech bubbles
           updatedSprites[spriteAIndex].saying = "Swapped blocks!"
           updatedSprites[spriteBIndex].saying = "Swapped blocks!"
 
           // Clear the speech bubbles after a short delay
-          if (updatedSprites[spriteAIndex].sayingTimer) clearTimeout(updatedSprites[spriteAIndex].sayingTimer)
-          if (updatedSprites[spriteBIndex].sayingTimer) clearTimeout(updatedSprites[spriteBIndex].sayingTimer)
+          if (updatedSprites[spriteAIndex].sayingTimer) {
+            clearTimeout(updatedSprites[spriteAIndex].sayingTimer)
+          }
+          if (updatedSprites[spriteBIndex].sayingTimer) {
+            clearTimeout(updatedSprites[spriteBIndex].sayingTimer)
+          }
 
           const spriteATimerId = setTimeout(() => {
             setSprites((prevSprites) =>
@@ -440,6 +468,8 @@ const ScratchEditor: React.FC = () => {
               prevSprites.map((s) => (s.id === spriteAId || s.id === spriteBId ? { ...s, collided: false } : s)),
             )
           }, 500)
+        } else {
+          console.warn(`Could not find one or both sprites: ${spriteAId}, ${spriteBId}`)
         }
       }
     }
@@ -789,17 +819,29 @@ const ScratchEditor: React.FC = () => {
     }
   }
 
+  // Update the useEffect hook that handles animation
   useEffect(() => {
     if (isPlaying && !isDemoMode) {
+      console.log("Starting animation loop")
       lastTimeRef.current = performance.now()
+
+      // Ensure we're not creating multiple animation loops
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+
       animationFrameRef.current = requestAnimationFrame(executeBlocks)
     } else if (animationFrameRef.current) {
+      console.log("Stopping animation loop")
       cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
     }
 
     return () => {
       if (animationFrameRef.current) {
+        console.log("Cleaning up animation loop")
         cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
       }
     }
   }, [isPlaying, isDemoMode])
@@ -887,8 +929,36 @@ const ScratchEditor: React.FC = () => {
                 </>
               )}
             </button>
+            <button
+              className="px-4 py-2 bg-gray-500 text-white rounded-md font-bold hover:bg-gray-600 transition-colors"
+              onClick={() => setDebugMode(!debugMode)}
+            >
+              {debugMode ? "Disable Debug" : "Enable Debug"}
+            </button>
           </div>
         </header>
+
+        {debugMode && (
+          <div className="bg-black text-green-400 p-2 font-mono text-xs overflow-auto" style={{ maxHeight: "150px" }}>
+            <div>Debug Mode Active</div>
+            <div>Sprites: {sprites.length}</div>
+            <div>Selected: {selectedSpriteId}</div>
+            <div>Playing: {isPlaying ? "Yes" : "No"}</div>
+            <div>Demo Mode: {isDemoMode ? "Yes" : "No"}</div>
+            <div>Demo Step: {demoStep}</div>
+            <div>Collision: {collisionOccurred ? "Yes" : "No"}</div>
+            <div>Demo Collision: {demoCollisionOccurred ? "Yes" : "No"}</div>
+            <div>Demo Tick: {demoTick}</div>
+            <div>
+              Sprite Positions:
+              {sprites.map((s) => (
+                <div key={s.id}>
+                  {s.name}: ({s.x.toFixed(0)}, {s.y.toFixed(0)}) - Blocks: {s.blocks.length}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-1 overflow-hidden">
           <div className="w-64 bg-gray-200 p-4 overflow-y-auto">

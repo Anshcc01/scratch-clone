@@ -29,9 +29,16 @@ const SimpleDemoMode: React.FC<SimpleDemoModeProps> = ({ onExit }) => {
       setStep(2)
     }, 5000)
 
+    // Force re-render every 100ms to ensure animations are running
+    const renderInterval = setInterval(() => {
+      // This empty setState forces a re-render
+      setStep((prevStep) => prevStep)
+    }, 100)
+
     return () => {
       clearTimeout(step1Timer)
       clearTimeout(collisionTimer)
+      clearInterval(renderInterval)
     }
   }, [])
 
