@@ -39,7 +39,19 @@ Follow these steps to run the project locally:
    npm install
    \`\`\`
 
-   Or using yarn:
+   If you encounter dependency conflicts, try one of these approaches:
+
+   **Option 1**: Use the --legacy-peer-deps flag
+   \`\`\`bash
+   npm install --legacy-peer-deps
+   \`\`\`
+
+   **Option 2**: Use the --force flag
+   \`\`\`bash
+   npm install --force
+   \`\`\`
+
+   **Option 3**: Use yarn instead of npm
    \`\`\`bash
    yarn install
    \`\`\`
@@ -59,6 +71,25 @@ Follow these steps to run the project locally:
 5. **Open the application**
 
    Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
+
+## Troubleshooting
+
+### Dependency Conflicts
+
+If you see errors like:
+
+\`\`\`
+npm ERR! code ERESOLVE
+npm ERR! ERESOLVE unable to resolve dependency tree
+\`\`\`
+
+This is due to peer dependency conflicts. The simplest solution is to use the `--legacy-peer-deps` flag:
+
+\`\`\`bash
+npm install --legacy-peer-deps
+\`\`\`
+
+This tells npm to ignore peer dependency conflicts and install packages anyway, which is usually fine for this project.
 
 ## How to Use
 
@@ -103,6 +134,3 @@ MIT
 ## Acknowledgements
 
 Inspired by MIT's Scratch project (https://scratch.mit.edu/)
-\`\`\`
-
-Let's also create a simple screenshot file for the README:
