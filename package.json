@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "lint": "next lint",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

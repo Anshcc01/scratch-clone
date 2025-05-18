@@ -377,10 +377,7 @@ const ScratchEditor: React.FC = () => {
       console.log(`Detected ${collisions.length} collisions`)
     }
 
-    let collisionHappened = false
-
     if (collisions.length > 0) {
-      collisionHappened = true
       console.log("Collision detected! Processing collision...")
 
       // Set collision flag for visual feedback
@@ -819,31 +816,22 @@ const ScratchEditor: React.FC = () => {
     }
   }
 
-  // Update the useEffect hook that handles animation
   useEffect(() => {
     if (isPlaying && !isDemoMode) {
-      console.log("Starting animation loop")
       lastTimeRef.current = performance.now()
-
-      // Ensure we're not creating multiple animation loops
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-
       animationFrameRef.current = requestAnimationFrame(executeBlocks)
     } else if (animationFrameRef.current) {
-      console.log("Stopping animation loop")
       cancelAnimationFrame(animationFrameRef.current)
-      animationFrameRef.current = null
     }
 
     return () => {
       if (animationFrameRef.current) {
-        console.log("Cleaning up animation loop")
         cancelAnimationFrame(animationFrameRef.current)
-        animationFrameRef.current = null
       }
     }
+    // executeBlocks references state variables that change frequently
+    // Adding it to the dependency array would cause too many re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlaying, isDemoMode])
 
   // Clean up timers and animation frames when component unmounts

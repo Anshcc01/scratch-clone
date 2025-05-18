@@ -16,8 +16,7 @@ const BlockTemplate: React.FC<BlockTemplateProps> = ({ block, addBlock }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "BLOCK",
     item: { ...block, id: uuidv4() },
-    end: (item, monitor) => {
-      const dropResult = monitor.getDropResult() as { name: string; spriteId: string } | null
+    end: (_item, _monitor) => {
       // We'll let the drop target handle the block addition
     },
     collect: (monitor) => ({
